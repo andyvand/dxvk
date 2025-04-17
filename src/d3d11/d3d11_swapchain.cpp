@@ -6,6 +6,10 @@
 
 #include "../util/util_win32_compat.h"
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 namespace dxvk {
 
   static uint16_t MapGammaControlPoint(float x) {
@@ -159,10 +163,15 @@ namespace dxvk {
 
   HANDLE STDMETHODCALLTYPE D3D11SwapChain::GetFrameLatencyEvent() {
     HANDLE result = nullptr;
+#ifdef _WIN32
     HANDLE processHandle = GetCurrentProcess();
-
     if (!DuplicateHandle(processHandle, m_frameLatencyEvent,
         processHandle, &result, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+#else
+    HANDLE processHandle = (HANDLE)((unsigned long)getpid());
+    result = processHandle;
+    if (processHandle == nullptr) {
+#endif
       Logger::err("DxgiSwapChain::GetFrameLatencyWaitableObject: DuplicateHandle failed");
       return nullptr;
     }
@@ -240,7 +249,11 @@ namespace dxvk {
       // this behaviour will hang if we attempt to decrement the semaphore.
       // Thus, only increment the semaphore as necessary.
       if (MaxLatency > m_frameLatency)
+#ifdef _WIN32
         ReleaseSemaphore(m_frameLatencyEvent, MaxLatency - m_frameLatency, nullptr);
+#else
+        sem_close((sem_t *)&m_frameLatencyEvent);
+#endif
     }
 
     m_frameLatency = MaxLatency;
@@ -495,7 +508,11 @@ namespace dxvk {
     m_frameLatencySignal = new sync::CallbackFence(m_frameId);
 
     if (m_desc.Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+#ifdef _WIN32
       m_frameLatencyEvent = CreateSemaphore(nullptr, m_frameLatency, DXGI_MAX_SWAP_CHAIN_BUFFERS, nullptr);
+#else
+      sem_init((sem_t *)&m_frameLatencyEvent, m_frameLatency, DXGI_MAX_SWAP_CHAIN_BUFFERS);
+#endif
   }
 
 
@@ -605,7 +622,11 @@ namespace dxvk {
 
 
   void D3D11SwapChain::DestroyFrameLatencyEvent() {
+#ifdef _WIN32
     CloseHandle(m_frameLatencyEvent);
+#else
+    sem_close((sem_t *)&m_frameLatencyEvent);
+#endif
   }
 
 
@@ -632,7 +653,11 @@ namespace dxvk {
       cFrameLatencyEvent = m_frameLatencyEvent
     ] () {
       if (cFrameLatencyEvent)
+#ifdef _WIN32
         ReleaseSemaphore(cFrameLatencyEvent, 1, nullptr);
+#else
+        sem_close((sem_t *)&cFrameLatencyEvent);
+#endif
 
       std::lock_guard<dxvk::mutex> lock(m_frameStatisticsLock);
       m_frameStatistics.PresentCount = cFrameId - DXGI_MAX_SWAP_CHAIN_BUFFERS;

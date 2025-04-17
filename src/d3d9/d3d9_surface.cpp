@@ -218,7 +218,11 @@ namespace dxvk {
     createInfo.Width       = desc.Width;
     createInfo.Height      = desc.Height;
     createInfo.Pitch       = lockedRect.Pitch;
+#ifdef _WIN32
     createInfo.hDeviceDc   = CreateCompatibleDC(NULL);
+#else
+    createInfo.hDeviceDc   = nullptr;
+#endif
     createInfo.pColorTable = nullptr;
 
     // Out...
@@ -228,7 +232,11 @@ namespace dxvk {
     if (D3DKMTCreateDCFromMemory(&createInfo))
       Logger::err("D3D9: Failed to create GDI DC");
 
+#ifdef _WIN32
     DeleteDC(createInfo.hDeviceDc);
+#else
+      createInfo.hDeviceDc = nullptr;
+#endif
 
     // These should now be set...
     m_dcDesc.hDC     = createInfo.hDc;

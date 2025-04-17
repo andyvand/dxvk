@@ -6,11 +6,19 @@
 
 #include "../util/util_bit.h"
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
 namespace dxvk::wsi {
 
   class Sdl3WsiDriver : public WsiDriver {
   private:
+#ifdef _WIN32
     HMODULE libsdl;
+#else
+    void *libsdl;
+#endif
     #define SDL_PROC(ret, name, params) \
       typedef ret (SDLCALL *pfn_##name) params; \
       pfn_##name name;

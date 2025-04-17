@@ -8,6 +8,10 @@
 
 #include <algorithm>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 namespace dxvk {
 
   D3D9CommonTexture::D3D9CommonTexture(
@@ -623,8 +627,14 @@ namespace dxvk {
       if (ntHandle == INVALID_HANDLE_VALUE || !setSharedMetadata(ntHandle, &metadata, sizeof(metadata)))
         Logger::warn("D3D9: Failed to write shared resource info for a texture");
 
+#ifdef _WIN32
       if (ntHandle != INVALID_HANDLE_VALUE)
         ::CloseHandle(ntHandle);
+#else
+      if (ntHandle != INVALID_HANDLE_VALUE)
+        ntHandle = nullptr;
+#endif
+
     }
   }
 

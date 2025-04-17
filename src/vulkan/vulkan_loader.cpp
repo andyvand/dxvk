@@ -9,27 +9,57 @@
 
 namespace dxvk::vk {
 
+#ifdef _WIN32
   static std::pair<HMODULE, PFN_vkGetInstanceProcAddr> loadVulkanLibrary() {
+#else
+  static std::pair<void *, PFN_vkGetInstanceProcAddr> loadVulkanLibrary() {
+#endif
+#ifdef __APPLE__
+    static const std::array<const char*, 5> dllNames = {{
+#else
     static const std::array<const char*, 2> dllNames = {{
+#endif
 #ifdef _WIN32
       "winevulkan.dll",
       "vulkan-1.dll",
 #else
+#ifdef __APPLE__
+      "libvukan.dylib",
+      "libvukan.1.dylib",
+      "vulkan.framework/vulkan",
+      "libMoltenVK.dylib",
+      "MoltenVK.framework/MoltenVK",
+#else
       "libvulkan.so",
       "libvulkan.so.1",
+#endif
 #endif
     }};
 
     for (auto dllName : dllNames) {
+#ifndef _WIN32
+      void *library = dlopen(dllName, RTLD_NOW | RTLD_LOCAL);
+
+      if (!library)
+        continue;
+
+      auto proc = dlsym(library, "vkGetInstanceProcAddr");
+#else
       HMODULE library = LoadLibraryA(dllName);
 
       if (!library)
         continue;
 
       auto proc = GetProcAddress(library, "vkGetInstanceProcAddr");
+#endif
 
       if (!proc) {
+#ifdef _WIN32
         FreeLibrary(library);
+#else
+        dlclose(library);
+#endif
+
         continue;
       }
 
@@ -51,7 +81,11 @@ namespace dxvk::vk {
 
   LibraryLoader::~LibraryLoader() {
     if (m_library)
+#ifdef _WIN32
       FreeLibrary(m_library);
+#else
+      dlclose(m_library);
+#endif
   }
 
   PFN_vkVoidFunction LibraryLoader::sym(VkInstance instance, const char* name) const {

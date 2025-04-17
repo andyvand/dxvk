@@ -53,8 +53,10 @@ d3d9_ld_args      = []
 d3d9_link_depends = []
 
 if platform != 'windows'
+if platform != 'darwin'
   d3d9_ld_args      += [ '-Wl,--version-script', join_paths(meson.current_source_dir(), 'd3d9.sym') ]
   d3d9_link_depends += files('d3d9.sym')
+endif
 endif
 
 d3d9_dll = shared_library(dxvk_name_prefix+'d3d9', d3d9_src, glsl_generator.process(d3d9_shaders), d3d9_res,

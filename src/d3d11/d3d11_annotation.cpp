@@ -6,6 +6,10 @@
 #include "../util/util_misc.h"
 #include "../util/util_win32_compat.h"
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
 namespace dxvk {
 
   template <bool Register>
@@ -14,15 +18,27 @@ namespace dxvk {
     static const int16_t RegisterOrdinal = 28257;
     static const int16_t UnregisterOrdinal = 28258;
 
+#ifdef __APPLE__
+    void *d3d9Module = dlopen("libdxvk_d3d9.dylib", RTLD_NOW | RTLD_LOCAL);
+#elif defined(_WIN32)
     HMODULE d3d9Module = ::LoadLibraryA("d3d9.dll");
+#else
+    void *d3d9Module = dlopen("libdxvk_d3d9.so", RTLD_NOW | RTLD_LOCAL);
+#endif
+
     if (!d3d9Module) {
       Logger::info("Unable to find d3d9, some annotations may be missed.");
       return;
     }
 
     const int16_t ordinal = Register ? RegisterOrdinal : UnregisterOrdinal;
+#ifdef _WIN32
     auto registrationFunction = reinterpret_cast<RegistrationFunctionType>(::GetProcAddress(d3d9Module,
       reinterpret_cast<const char*>(static_cast<uintptr_t>(ordinal))));
+#else
+    auto registrationFunction = reinterpret_cast<RegistrationFunctionType>(dlsym(d3d9Module,
+        reinterpret_cast<const char*>(static_cast<uintptr_t>(ordinal))));
+#endif
 
     if (!registrationFunction) {
       Logger::info("Unable to find DXVK_RegisterAnnotation, some annotations may be missed.");

@@ -18,13 +18,23 @@ namespace dxvk {
           char*      pComments, 
           ID3DBlob** ppDisassembly) {
     if (g_pfnDisassembleShader == nullptr) {
+#ifdef _WIN32
       HMODULE d3d9x = LoadLibraryA("d3dx9.dll");
 
       if (d3d9x == nullptr)
         d3d9x = LoadLibraryA("d3dx9_43.dll");
 
-      g_pfnDisassembleShader = 
+      g_pfnDisassembleShader =
         reinterpret_cast<D3DXDisassembleShader>(GetProcAddress(d3d9x, "D3DXDisassembleShader"));
+#else
+#ifdef __APPLE__
+      HMODULE d3d9x = dlopen("libdxvk_d3d9.dylib", RTLD_NOW | RTLD_LOCAL);
+#else
+      HMODULE d3d9x = dlopen("libdxvk_d3d9.so", RTLD_NOW | RTLD_LOCAL);
+#endif
+      g_pfnDisassembleShader =
+        reinterpret_cast<D3DXDisassembleShader>(dlsym(d3d9x, "D3DXDisassembleShader"));
+#endif
     }
 
     if (g_pfnDisassembleShader == nullptr)

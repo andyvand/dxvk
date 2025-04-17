@@ -208,7 +208,7 @@ namespace dxvk {
     if (m_shared && m_info.sharing.mode == DxvkSharedHandleMode::Import) {
       sharedImportWin32.pNext = std::exchange(sharedMemoryInfo, &sharedImportWin32);
       sharedImportWin32.handleType = m_info.sharing.type;
-      sharedImportWin32.handle = m_info.sharing.handle;
+      sharedImportWin32.handle = (HANDLE)((unsigned long)m_info.sharing.handle);
     }
 
     DxvkAllocationInfo allocationInfo = { };

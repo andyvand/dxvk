@@ -10,18 +10,34 @@
 namespace dxvk::wsi {
 
   Sdl3WsiDriver::Sdl3WsiDriver() {
-    libsdl = LoadLibraryA( // FIXME: Get soname as string from meson
-#if defined(_WIN32)
-        "SDL3.dll"
-#elif defined(__APPLE__)
-        "libSDL3.0.dylib"
-#else
-        "libSDL3.so.0"
+#ifdef __APPLE__
+    libsdl = dlopen("SDL3.framework/SDL3", RTLD_NOW | RTLD_LOCAL);
+
+      if (libsdl == nullptr) {
 #endif
-      );
+#ifdef _WIN32
+          libsdl = LoadLibraryA( // FIXME: Get soname as string from meson
+#else
+          libsdl = dlopen(
+#endif
+#if defined(_WIN32)
+          "SDL3.dll"
+#elif defined(__APPLE__)
+          "libSDL3.0.dylib"
+#else
+          "libSDL3.so.0"
+#endif
+#ifndef _WIN32
+          , RTLD_NOW | RTLD_LOCAL
+#endif
+        );
+#ifdef __APPLE__
+    }
+#endif
     if (libsdl == nullptr)
       throw DxvkError("SDL3 WSI: Failed to load SDL3 DLL.");
 
+#ifdef _WIN32
     #define SDL_PROC(ret, name, params) \
       name = reinterpret_cast<pfn_##name>(GetProcAddress(libsdl, #name)); \
       if (name == nullptr) { \
@@ -29,6 +45,16 @@ namespace dxvk::wsi {
         libsdl = nullptr; \
         throw DxvkError("SDL3 WSI: Failed to load " #name "."); \
       }
+#else
+    #define SDL_PROC(ret, name, params) \
+      name = reinterpret_cast<pfn_##name>(dlsym(libsdl, #name)); \
+      if (name == nullptr) { \
+        dlclose(libsdl); \
+        libsdl = nullptr; \
+        throw DxvkError("SDL3 WSI: Failed to load " #name "."); \
+      }
+#endif
+
     #include "wsi_platform_sdl3_funcs.h"
 
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
@@ -37,7 +63,11 @@ namespace dxvk::wsi {
 
   Sdl3WsiDriver::~Sdl3WsiDriver() {
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
+#ifdef _WIN32
     FreeLibrary(libsdl);
+#else
+    dlclose(libsdl);
+#endif
   }
 
   std::vector<const char *> Sdl3WsiDriver::getInstanceExtensions() {
@@ -62,7 +92,11 @@ namespace dxvk::wsi {
     try {
       *driver = new Sdl3WsiDriver();
     } catch (const DxvkError& e) {
+#ifdef _WIN32
       Logger::err(str::format(e.message()));
+#else
+      fprintf(stderr, "ERROR: %s\n", e.message().c_str());
+#endif
       return false;
     }
     return true;

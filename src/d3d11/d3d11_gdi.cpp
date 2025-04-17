@@ -27,7 +27,11 @@ namespace dxvk {
     desc.Width       = tex->Width;
     desc.Height      = tex->Height;
     desc.Pitch       = tex->Width * sizeof(uint32_t);
+#ifdef _WIN32
     desc.hDeviceDc   = CreateCompatibleDC(nullptr);
+#else
+    desc.hDeviceDc   = nullptr;
+#endif
     desc.pColorTable = nullptr;
     desc.hDc         = nullptr;
     desc.hBitmap     = nullptr;

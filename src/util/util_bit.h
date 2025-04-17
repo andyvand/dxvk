@@ -63,7 +63,7 @@ namespace dxvk::bit {
     return n >> (8u * (sizeof(T) - 1u));
   }
 
-  inline uint32_t tzcnt(uint32_t n) {
+  static inline uint32_t tzcnt(uint32_t n) {
     #if defined(_MSC_VER) && !defined(__clang__)
     if(n == 0)
       return 32;
@@ -101,7 +101,7 @@ namespace dxvk::bit {
     #endif
   }
 
-  inline uint32_t tzcnt(uint64_t n) {
+  static inline uint32_t tzcnt(uint64_t n) {
     #if defined(DXVK_ARCH_X86_64) && defined(_MSC_VER) && !defined(__clang__)
     if(n == 0)
       return 64;
@@ -133,7 +133,7 @@ namespace dxvk::bit {
     #endif
   }
 
-  inline uint32_t bsf(uint32_t n) {
+  static inline uint32_t bsf(uint32_t n) {
     #if (defined(__GNUC__) || defined(__clang__)) && !defined(__BMI__) && defined(DXVK_ARCH_X86)
     uint32_t res;
     asm ("tzcnt %1,%0"
@@ -146,7 +146,7 @@ namespace dxvk::bit {
     #endif
   }
 
-  inline uint32_t bsf(uint64_t n) {
+  static inline uint32_t bsf(uint64_t n) {
     #if (defined(__GNUC__) || defined(__clang__)) && !defined(__BMI__) && defined(DXVK_ARCH_X86_64)
     uint64_t res;
     asm ("tzcnt %1,%0"
@@ -159,7 +159,7 @@ namespace dxvk::bit {
     #endif
   }
 
-  inline uint32_t lzcnt(uint32_t n) {
+  static inline uint32_t lzcnt(uint32_t n) {
     #if defined(_MSC_VER) && !defined(__clang__) && !defined(__LZCNT__)
     unsigned long bsr;
     if(n == 0)
@@ -185,7 +185,7 @@ namespace dxvk::bit {
     #endif
   }
 
-  inline uint32_t lzcnt(uint64_t n) {
+  static inline uint32_t lzcnt(uint64_t n) {
     #if defined(_MSC_VER) && !defined(__clang__) && !defined(__LZCNT__) && defined(DXVK_ARCH_X86_64)
     unsigned long bsr;
     if(n == 0)
@@ -230,7 +230,7 @@ namespace dxvk::bit {
    * \param [in] mem Memory region to clear
    * \param [in] size Number of bytes to clear
    */
-  inline void bclear(void* mem, size_t size) {
+  static inline void bclear(void* mem, size_t size) {
     #if defined(DXVK_ARCH_X86) && (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
     auto zero = _mm_setzero_si128();
 
@@ -652,7 +652,7 @@ namespace dxvk::bit {
   /**
    * \brief Inserts one null bit after each bit
    */
-  inline uint32_t split2(uint32_t c) {
+  static inline uint32_t split2(uint32_t c) {
     c = (c ^ (c << 8u)) & 0x00ff00ffu;
     c = (c ^ (c << 4u)) & 0x0f0f0f0fu;
     c = (c ^ (c << 2u)) & 0x33333333u;
@@ -664,7 +664,7 @@ namespace dxvk::bit {
   /**
    * \brief Inserts two null bits after each bit
    */
-  inline uint64_t split3(uint64_t c) {
+  static inline uint64_t split3(uint64_t c) {
     c = (c | c << 32u) & 0x001f00000000ffffull;
     c = (c | c << 16u) & 0x001f0000ff0000ffull;
     c = (c | c <<  8u) & 0x100f00f00f00f00full;
@@ -682,7 +682,7 @@ namespace dxvk::bit {
    * \param [in] y Y coordinate
    * \returns Morton code of x and y
    */
-  inline uint32_t interleave(uint16_t x, uint16_t y) {
+  static inline uint32_t interleave(uint16_t x, uint16_t y) {
     return split2(x) | (split2(y) << 1u);
   }
 
@@ -692,7 +692,7 @@ namespace dxvk::bit {
    *
    * All three numbers must fit into 16 bits.
    */
-  inline uint64_t interleave(uint16_t x, uint16_t y, uint16_t z) {
+  static inline uint64_t interleave(uint16_t x, uint16_t y, uint16_t z) {
     return split3(x) | (split3(y) << 1u) | (split3(z) << 2u);
   }
 

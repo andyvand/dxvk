@@ -1136,7 +1136,11 @@ namespace dxvk {
 
     if (hEvent) {
       m_submissionFence->setCallback(submissionId, [hEvent] {
+#ifdef _WIN32
         SetEvent(hEvent);
+#else
+        (void)hEvent;
+#endif
       });
     }
 

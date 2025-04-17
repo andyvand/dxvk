@@ -475,7 +475,6 @@ namespace dxvk {
     return E_NOTIMPL;
   }
 
-
   HRESULT STDMETHODCALLTYPE DxgiAdapter::RegisterVideoMemoryBudgetChangeNotificationEvent(
           HANDLE                        hEvent,
           DWORD*                        pdwCookie) {
@@ -490,9 +489,13 @@ namespace dxvk {
     if (!m_eventThread.joinable())
       m_eventThread = dxvk::thread([this] { runEventThread(); });
 
+#ifdef _WIN32
     // This method seems to fire the
     // event immediately on Windows
     SetEvent(hEvent);
+#else
+    (void)hEvent;
+#endif
 
     *pdwCookie = cookie;
     return S_OK;
@@ -546,8 +549,10 @@ namespace dxvk {
       if (budgetChanged) {
         memoryInfoOld = memoryInfoNew;
 
+#ifdef _WIN32
         for (const auto& pair : m_eventMap)
           SetEvent(pair.second);
+#endif
       }
     }
   }

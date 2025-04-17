@@ -93,7 +93,11 @@ namespace dxvk {
           HANDLE              hEvent) {
     if (hEvent) {
       m_fence->enqueueWait(Value, [hEvent] {
+#ifdef _WIN32
         SetEvent(hEvent);
+#else
+        (void)hEvent;
+#endif
       });
     } else {
       m_fence->wait(Value);

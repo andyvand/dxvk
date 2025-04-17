@@ -3,6 +3,10 @@
 #include "../util/rc/util_rc.h"
 #include "../util/rc/util_rc_ptr.h"
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
+
 #define VK_USE_PLATFORM_WIN32_KHR 1
 #include <vulkan/vulkan.h>
 
@@ -30,7 +34,11 @@ namespace dxvk::vk {
     PFN_vkGetInstanceProcAddr getLoaderProc() const { return m_getInstanceProcAddr; }
     bool               valid() const;
   protected:
+#ifndef _WIN32
+    void *                    m_library             = nullptr;
+#else
     HMODULE                   m_library             = nullptr;
+#endif
     PFN_vkGetInstanceProcAddr m_getInstanceProcAddr = nullptr;
   };
   

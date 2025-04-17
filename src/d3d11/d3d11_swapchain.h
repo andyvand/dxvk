@@ -9,6 +9,11 @@
 
 #include "../util/sync/sync_signal.h"
 
+#ifndef _WIN32
+#include <pthread.h>
+#include <semaphore.h>
+#endif
+
 namespace dxvk {
   
   class D3D11Device;
