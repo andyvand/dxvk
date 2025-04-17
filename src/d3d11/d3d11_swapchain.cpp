@@ -168,7 +168,7 @@ namespace dxvk {
     if (!DuplicateHandle(processHandle, m_frameLatencyEvent,
         processHandle, &result, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
 #else
-    HANDLE processHandle = (HANDLE)((unsigned long)getpid());
+    HANDLE processHandle = pthread_self();
     result = processHandle;
     if (processHandle == nullptr) {
 #endif
