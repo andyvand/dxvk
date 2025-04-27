@@ -23,10 +23,13 @@ namespace dxvk::sync {
       for (uint32_t i = 1; i < spinCount; i++) {
         #if defined(DXVK_ARCH_X86)
         _mm_pause();
+        #elif defined(DXVK_ARCH_ARM64) && defined(_MSC_VER)
+        __yield();
         #elif defined(DXVK_ARCH_ARM64)
         __asm__ __volatile__ ("yield");
         #else
-        #error "Pause/Yield not implemented for this architecture."
+        /* Do nothing (busy-loop). Please add more #elif above here if
+         * your CPU architecture has a suitable pause/yield instruction */
         #endif
         if (fn())
           return;

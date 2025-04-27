@@ -6,10 +6,11 @@
   #if defined(__x86_64__) || defined(_M_X64) || defined(__e2k__)
     #define DXVK_ARCH_X86_64
   #endif
+  #if defined(__aarch64__) || defined(_M_ARM64) || defined(__arm64__)
+    #define DXVK_ARCH_ARM64
+  #endif
 #elif defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
   #define DXVK_ARCH_ARM64
-#else
-#error "Unknown CPU Architecture"
 #endif
 
 #ifdef DXVK_ARCH_X86
@@ -63,6 +64,19 @@ namespace dxvk::bit {
     return n >> (8u * (sizeof(T) - 1u));
   }
 
+#ifdef DXVK_ARCH_ARM64
+  static inline uint32_t tzcnt(uint32_t n) {
+   uint32_t count = 0;
+   uint32_t i = 0;
+
+   while ( i<32 && (((n >> i) & 0x1) == 0)) {
+      i++;
+      count++;
+   }
+
+   return count;
+  }
+#else
   static inline uint32_t tzcnt(uint32_t n) {
     #if defined(_MSC_VER) && !defined(__clang__)
     if(n == 0)
@@ -100,7 +114,21 @@ namespace dxvk::bit {
     return n != 0 ? r : 32;
     #endif
   }
+#endif
 
+#ifdef DXVK_ARCH_ARM64
+  static inline uint32_t tzcnt(uint64_t n) {
+   uint32_t count = 0;
+   uint64_t i = 0;
+
+   while ( i<64 && (((n >> i) & 0x1) == 0)) {
+      i++;
+      count++;
+   }
+
+   return count;
+  }
+#else
   static inline uint32_t tzcnt(uint64_t n) {
     #if defined(DXVK_ARCH_X86_64) && defined(_MSC_VER) && !defined(__clang__)
     if(n == 0)
@@ -132,6 +160,7 @@ namespace dxvk::bit {
     }
     #endif
   }
+#endif
 
   static inline uint32_t bsf(uint32_t n) {
     #if (defined(__GNUC__) || defined(__clang__)) && !defined(__BMI__) && defined(DXVK_ARCH_X86)

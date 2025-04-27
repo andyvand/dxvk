@@ -8,7 +8,12 @@
 #endif
 
 #include <stdint.h>
+
+#if defined(_M_ARM64) || defined(__arm64__) || defined(__aarch64__)
+#include "d3d8.h"
+#else
 #include <d3d8.h>
+#endif
 
 // Declare __uuidof for D3D8 interfaces
 #ifdef __CRT_UUID_DECL
