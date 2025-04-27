@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+
 #include "../util/config/config.h"
 
 /**

@@ -3,6 +3,7 @@
 #if defined(__unix__)
 
 #include <windows.h>
+
 #include <dlfcn.h>
 
 #include "log/log.h"
